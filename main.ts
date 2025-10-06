@@ -1,7 +1,8 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, requestUrl } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
+/*
 interface LighterPackObsidianImporterSettings {
 	mySetting: string;
 }
@@ -9,11 +10,15 @@ interface LighterPackObsidianImporterSettings {
 const DEFAULT_SETTINGS: LighterPackObsidianImporterSettings = {
 	mySetting: 'default'
 }
+*/
 
 export default class LighterPackObsidianImporter extends Plugin {
+	/*
 	settings: LighterPackObsidianImporterSettings;
+	*/
 
 	async onload() {
+		/*
 		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
@@ -76,12 +81,32 @@ export default class LighterPackObsidianImporter extends Plugin {
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		*/
+
+		this.addCommand({
+			id: "import-packing-list-from-url",
+			name: "Import a packing list from a lighterpack.com URL",
+			editorCallback: (editor: Editor) => {
+				new UrlPromptModal(this.app, async (url: string) => {
+					if (!url) return;
+					try {
+						const response = await requestUrl({ url });
+						const text = response.text;
+						editor.replaceSelection(text);
+					} catch (e) {
+						new Notice("Unable to import the packing list.\nMore details in the console.");
+						console.error(e);
+					}
+				}).open();
+			}
+		});
 	}
 
 	onunload() {
 
 	}
 
+	/*
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
@@ -89,8 +114,10 @@ export default class LighterPackObsidianImporter extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+	*/
 }
 
+/*
 class SampleModal extends Modal {
 	constructor(app: App) {
 		super(app);
@@ -106,7 +133,48 @@ class SampleModal extends Modal {
 		contentEl.empty();
 	}
 }
+*/
 
+class UrlPromptModal extends Modal {
+
+	constructor(app: App, onSubmit: (url: string) => void) {
+		super(app);
+		
+		this.onSubmit = onSubmit;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		let url = "";
+
+		contentEl.createEl("h1", { text: "Inserisci l'URL" });
+
+		contentEl.createEl("div", { cls: "setting-divider" });
+
+		new Setting(contentEl)
+			.setName("lighterpack.com URL")
+			.addText(text => text
+				.setPlaceholder("https://lighterpack.com/r/...")
+				.onChange(value => url = value)
+			)
+			.addButton(btn => btn
+				.setButtonText("Import")
+				.setCta()
+				.onClick(() => {
+					this.close();
+					this.onSubmit(url);
+				})
+			);
+	}
+
+	onSubmit: (url: string) => void;
+
+	onClose() {
+		this.contentEl.empty();
+	}
+}
+
+/*
 class SampleSettingTab extends PluginSettingTab {
 	plugin: LighterPackObsidianImporter;
 
@@ -132,3 +200,4 @@ class SampleSettingTab extends PluginSettingTab {
 				}));
 	}
 }
+*/
