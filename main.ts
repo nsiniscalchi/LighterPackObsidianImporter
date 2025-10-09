@@ -86,13 +86,13 @@ export default class LighterPackObsidianImporter extends Plugin {
 		this.addCommand({
 			id: "import-packing-list-from-url",
 			name: "Import a packing list from a lighterpack.com URL",
-			editorCallback: (editor: Editor) => {
+			callback: () => {
 				new UrlPromptModal(this.app, async (url: string) => {
 					if (!url) return;
 					try {
 						const response = await requestUrl({ url });
 						const html = response.text;
-						HTMLscraper(html, editor);
+						HTMLscraper(html);
 					} catch (e) {
 						new Notice("Unable to import the packing list.\nMore details in the console.");
 						console.error(e);
@@ -202,7 +202,7 @@ class SampleSettingTab extends PluginSettingTab {
 }
 */
 
-function HTMLscraper(html: string, editor: Editor): void{
+function HTMLscraper(html: string): void{
 
 	let title = "";
 	let description = "";
@@ -271,7 +271,7 @@ function HTMLscraper(html: string, editor: Editor): void{
 			}
 			categories.push(container ? (container.textContent || '') : '');
 			console.log("Category: " + categories[i]);
-
+			
 			let nodeList2 = nodeList[i].querySelectorAll('li.lpItem');
 			for(let j=0; j<nodeList2.length; j++){
 				let itemImage = "";
@@ -393,7 +393,6 @@ function HTMLscraper(html: string, editor: Editor): void{
 			}
 		}
 		
-		// editor.replaceSelection(text);
 	} catch (err) {
 		new Notice("Error parsing the packing list HTML.\nMore details in the console.");
 		console.error('Error parsing HTML', err);
