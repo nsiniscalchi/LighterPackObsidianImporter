@@ -221,7 +221,13 @@ function HTMLscraper(html: string): void{
 			return;
 		}
 		title = container ? (container.textContent || '') : '';
+		let folderPath = title.replaceAll(" ", "");
 		console.log("Title: " + title);
+
+		this.app.vault.createFolder(folderPath);
+
+		this.app.vault.createFolder(folderPath+'/gear');
+
 		
 		container = doc.querySelector('div#lpListDescription');
 		if(!container){
@@ -232,6 +238,9 @@ function HTMLscraper(html: string): void{
 		container = container.querySelector('p');
 		description = container ? (container.textContent || '') : '';
 		console.log("Description: " + description);
+
+		this.app.vault.create(folderPath+'/'+title+'.md', description);
+
 
 		container = doc.querySelector('span.lpWeightCell.lpNumber');
 		if(!container){
@@ -270,8 +279,9 @@ function HTMLscraper(html: string): void{
 				return;
 			}
 			categories.push(container ? (container.textContent || '') : '');
-			console.log("Category: " + categories[i]);
 			
+			this.app.vault.createFolder(folderPath+'/gear/'+categories[i]);
+
 			let nodeList2 = nodeList[i].querySelectorAll('li.lpItem');
 			for(let j=0; j<nodeList2.length; j++){
 				let itemImage = "";
@@ -285,6 +295,7 @@ function HTMLscraper(html: string): void{
 				let itemPrice = 0;
 				let itemWeight = 0;
 				let itemQty = 0;
+				
 
 				container = nodeList2[j].querySelector('span.lpImageCell');
 				if(!container){
@@ -302,6 +313,7 @@ function HTMLscraper(html: string): void{
 					return;
 				}
 				itemName = container ? (container.textContent.trim() || '') : '';
+				itemName = itemName.replaceAll(":", "=");
 
 				container = nodeList2[j].querySelector('span.lpDescription');
 				if(!container){
@@ -310,6 +322,7 @@ function HTMLscraper(html: string): void{
 					return;
 				}
 				itemDescription = container ? (container.textContent.trim() || '') : '';
+				itemDescription = itemDescription.replaceAll(":", "=");
 
 				container = nodeList2[j].querySelector('i.lpWorn.lpActive');
 				if(!container){
@@ -389,7 +402,7 @@ function HTMLscraper(html: string): void{
 				}
 				itemQty = container ? parseInt(container.textContent || '0') : 0;
 
-				console.log("Item: " + itemName + " | " + itemDescription + " | " + itemImage + " | Worn: " + itemWorn + " | Consumable: " + itemConsumable + " | Stars: " + itemStar1 + itemStar2 + itemStar3 + " | Price: " + currency + itemPrice + " | Weight: " + itemsUnit + itemWeight + " | Qty: " + itemQty);
+				this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', "---\nitemName: "+itemName+"\nitemDescription: "+itemDescription+"\nitemImage: "+itemImage+"\nitemCategory: "+categories[i]+"\nitemWorn: "+itemWorn+"\nitemConsumable: "+itemConsumable+"\nitemStar1: "+itemStar1+"\nitemStar2: "+itemStar2+"\nitemStar3: "+itemStar3+"\nitemPrice: "+itemPrice+"\nitemWeight: "+itemWeight+"\nitemQty: "+itemQty+"\n---\n");
 			}
 		}
 		
