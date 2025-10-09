@@ -91,8 +91,8 @@ export default class LighterPackObsidianImporter extends Plugin {
 					if (!url) return;
 					try {
 						const response = await requestUrl({ url });
-						const text = response.text;
-						editor.replaceSelection(text);
+						const html = response.text;
+						HTMLscraper(html, editor);
 					} catch (e) {
 						new Notice("Unable to import the packing list.\nMore details in the console.");
 						console.error(e);
@@ -201,3 +201,203 @@ class SampleSettingTab extends PluginSettingTab {
 	}
 }
 */
+
+function HTMLscraper(html: string, editor: Editor): void{
+
+	let title = "";
+	let description = "";
+	let categories: string[] = [];
+	let itemsUnit = "";
+	let totalsUnit = "";
+	let currency = "";
+
+	try {
+		const doc = new DOMParser().parseFromString(html, 'text/html');
+		
+		let container = doc.querySelector('h1.lpListName');
+		if(!container){
+			new Notice("Unable to find the packing list title.");
+			console.log("h1.lpListName not found");
+			return;
+		}
+		title = container ? (container.textContent || '') : '';
+		console.log("Title: " + title);
+		
+		container = doc.querySelector('div#lpListDescription');
+		if(!container){
+			new Notice("Unable to find the packing list description.");
+			console.log("div#lpListDescription not found");
+			return;
+		}
+		container = container.querySelector('p');
+		description = container ? (container.textContent || '') : '';
+		console.log("Description: " + description);
+
+		container = doc.querySelector('span.lpWeightCell.lpNumber');
+		if(!container){
+			new Notice("Unable to find the packing list items unit.");
+			console.log("span.lpWeightCell not found");
+			return;
+		}
+		container = container.querySelector('span.lpDisplay');
+		itemsUnit = container ? (container.textContent || '') : '';
+		console.log("Items Unit: " + itemsUnit);
+
+		container = doc.querySelector('span.lpSubtotalUnit');
+		if(!container){
+			new Notice("Unable to find the packing list totals unit.");
+			console.log("span.lpSubtotalUnit not found");
+			return;
+		}
+		totalsUnit = container ? (container.textContent || '') : '';
+		console.log("Totals Unit: " + totalsUnit);
+
+		container = doc.querySelector('span.lpPriceCell.lpNumber');
+		if(!container){
+			new Notice("Unable to find the packing list currency.");
+			console.log("span.lpPriceCell not found");
+			return;
+		}
+		currency = container ? (container.textContent.trim().slice(0, 1) || '') : '';
+		console.log("Currency: " + currency);
+
+		let nodeList = doc.querySelectorAll('li.lpCategory');
+		for(let i=0; i<nodeList.length; i++){
+			container = nodeList[i].querySelector('h2');
+			if(!container){
+				new Notice("Unable to find the packing list category.");
+				console.log("h2 not found");
+				return;
+			}
+			categories.push(container ? (container.textContent || '') : '');
+			console.log("Category: " + categories[i]);
+
+			let nodeList2 = nodeList[i].querySelectorAll('li.lpItem');
+			for(let j=0; j<nodeList2.length; j++){
+				let itemImage = "";
+				let itemName = "";
+				let itemDescription = "";
+				let itemWorn = false;
+				let itemConsumable = false;
+				let itemStar1;
+				let itemStar2;
+				let itemStar3;
+				let itemPrice = 0;
+				let itemWeight = 0;
+				let itemQty = 0;
+
+				container = nodeList2[j].querySelector('span.lpImageCell');
+				if(!container){
+					new Notice("Unable to find the packing list item image.");
+					console.log("span.lpImageCell not found");
+					return;
+				}
+				container = container.querySelector('img');
+				itemImage = container ? (container.getAttribute('src') || '') : '';
+				
+				container = nodeList2[j].querySelector('span.lpName');
+				if(!container){
+					new Notice("Unable to find the packing list item name.");
+					console.log("span.lpName not found");
+					return;
+				}
+				itemName = container ? (container.textContent.trim() || '') : '';
+
+				container = nodeList2[j].querySelector('span.lpDescription');
+				if(!container){
+					new Notice("Unable to find the packing list item description.");
+					console.log("span.lpDescription not found");
+					return;
+				}
+				itemDescription = container ? (container.textContent.trim() || '') : '';
+
+				container = nodeList2[j].querySelector('i.lpWorn.lpActive');
+				if(!container){
+					itemWorn = false;
+				} else {
+					itemWorn = true;
+				}
+				
+				container = nodeList2[j].querySelector('i.lpConsumable.lpActive');
+				if(!container){
+					itemConsumable = false;
+				} else {
+					itemConsumable = true;
+				}
+
+				container = nodeList2[j].querySelector('span.lpActionsCell');
+				let containerCopy = nodeList2[j].querySelector('span.lpActionsCell');
+				if(!container || !containerCopy){
+					new Notice("Unable to find the packing list actions cell.");
+					console.log("span.lpActionsCell not found");
+					return;
+				}
+				container = containerCopy.querySelector('i.lpStar.lpHidden');
+				if(!container){
+					container = containerCopy.querySelector('i.lpStar1');
+					if(!container){
+						container = containerCopy.querySelector('i.lpStar2');
+						if(!container){
+							container = containerCopy.querySelector('i.lpStar3');
+							if(!container){
+								itemStar1 = false;
+								itemStar2 = false;
+								itemStar3 = false;
+							} else {
+								itemStar1 = false;
+								itemStar2 = false;
+								itemStar3 = true;
+							}
+						} else {
+							itemStar1 = false;
+							itemStar2 = true;
+							itemStar3 = false;
+						}
+					} else {
+						itemStar1 = true;
+						itemStar2 = false;
+						itemStar3 = false;
+					}
+				} else {
+					itemStar1 = false;
+					itemStar2 = false;
+					itemStar3 = false;
+				}
+
+				container = nodeList2[j].querySelector('span.lpPriceCell');
+				if(!container){
+					new Notice("Unable to find the packing list item price.");
+					console.log("span.lpPriceCell not found");
+					return;
+				}
+				itemPrice = container ? parseFloat(container.textContent.trim().slice(1) || '0') : 0;
+
+				container = nodeList2[j].querySelector('span.lpWeight');
+				if(!container){
+					new Notice("Unable to find the packing list item weight.");
+					console.log("span.lpWeight not found");
+					return;
+				}
+				itemWeight = container ? parseFloat(container.textContent || '0') : 0;
+
+
+				container = nodeList2[j].querySelector('span.lpQtyCell');
+				if(!container){
+					new Notice("Unable to find the packing list item quantity.");
+					console.log("span.lpQtyCell not found");
+					return;
+				}
+				itemQty = container ? parseInt(container.textContent || '0') : 0;
+
+				console.log("Item: " + itemName + " | " + itemDescription + " | " + itemImage + " | Worn: " + itemWorn + " | Consumable: " + itemConsumable + " | Stars: " + itemStar1 + itemStar2 + itemStar3 + " | Price: " + currency + itemPrice + " | Weight: " + itemsUnit + itemWeight + " | Qty: " + itemQty);
+			}
+		}
+		
+		// editor.replaceSelection(text);
+	} catch (err) {
+		new Notice("Error parsing the packing list HTML.\nMore details in the console.");
+		console.error('Error parsing HTML', err);
+		return;
+	}
+
+}
