@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, requestUrl } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, requestUrl } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
@@ -202,7 +202,7 @@ class SampleSettingTab extends PluginSettingTab {
 }
 */
 
-function HTMLscraper(html: string): void{
+async function HTMLscraper(html: string): Promise<void>{
 
 	let title = "";
 	let description = "";
@@ -239,8 +239,7 @@ function HTMLscraper(html: string): void{
 		description = container ? (container.textContent || '') : '';
 		console.log("Description: " + description);
 
-		this.app.vault.create(folderPath+'/'+title+'.md', description);
-
+		await this.app.vault.create(folderPath+'/'+title+'.md', description+'\n\n');
 
 		container = doc.querySelector('span.lpWeightCell.lpNumber');
 		if(!container){
@@ -402,9 +401,23 @@ function HTMLscraper(html: string): void{
 				}
 				itemQty = container ? parseInt(container.textContent || '0') : 0;
 
-				this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', "---\nitemName: "+itemName+"\nitemDescription: "+itemDescription+"\nitemImage: "+itemImage+"\nitemCategory: "+categories[i]+"\nitemWorn: "+itemWorn+"\nitemConsumable: "+itemConsumable+"\nitemStar1: "+itemStar1+"\nitemStar2: "+itemStar2+"\nitemStar3: "+itemStar3+"\nitemPrice: "+itemPrice+"\nitemWeight: "+itemWeight+"\nitemQty: "+itemQty+"\n---\n");
+				this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', "---\nName: "+itemName+"\nDescription: "+itemDescription+"\nImage: "+itemImage+"\nCategory: "+categories[i]+"\nWorn: "+itemWorn+"\nConsumable: "+itemConsumable+"\nStar1: "+itemStar1+"\nStar2: "+itemStar2+"\nStar3: "+itemStar3+"\nPrice: "+currency+itemPrice+"\nWeight: "+itemWeight+itemsUnit+"\nQty: "+itemQty+"\n---\n");
 			}
 		}
+		
+		
+			const filePath = folderPath+'/'+title+'.md';
+			const file = this.app.vault.getAbstractFileByPath(filePath);
+			if (file && file instanceof TFile) {
+				for(let i=0; i<categories.length; i++){	
+					const textToAppend = '```base\nfilters:\n  and:\n    - file.inFolder("'+folderPath+'/gear")\nviews:\n  - type: table\n    name: '+categories[i]+'\n    filters:\n      and:\n        - file.inFolder("'+folderPath+'/gear/'+categories[i]+'")\n    order:\n      - file.name\n      - Description\n      - Worn\n      - Consumable\n      - Price\n      - Weight\n      - Qty\n    sort:\n      - property: itemWeight\n        direction: DESC\n```\n\n';
+					const currentContent = await this.app.vault.read(file);
+					await this.app.vault.modify(file, currentContent + textToAppend);
+				}
+			} else {
+			console.log("Nota non trovata: " + filePath);
+			}
+
 		
 	} catch (err) {
 		new Notice("Error parsing the packing list HTML.\nMore details in the console.");
