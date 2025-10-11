@@ -7,17 +7,27 @@ If your plugin does not need CSS, delete this file.
 
 */
 
-.markdown-preview-view.lighterpack-list .markdown-preview-section,
-.markdown-preview-view.lighterpack-list .markdown-preview-p {
-    max-width: none !important;
+.markdown-source-view.mod-cm6.is-readable-line-width.lighterpack-list .cm-sizer {
+  max-width: none !important;
+  margin-left: auto;
+  margin-right: auto;
 }
-
-.cm-content.lighterpack-list,
-.cm-line.lighterpack-list,
-.markdown-source-view.lighterpack-list .cm-scroller {
-    max-width: none !important;
+.markdown-source-view.mod-cm6.is-readable-line-width.lighterpack-list .cm-content {
+  max-width: none !important;
 }
-
-.markdown-preview-view.lighterpack-list .view-content {
-    max-width: none !important;
+.markdown-source-view.mod-cm6.is-readable-line-width.lighterpack-list .cm-line {
+  max-width: none !important;
+}
+.markdown-source-view.mod-cm6.is-readable-line-width.lighterpack-list .cm-line.HyperMD-table-row {
+  max-width: 100%;
+}
+.markdown-preview-view.is-readable-line-width.lighterpack-list .markdown-preview-sizer {
+  max-width: none !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+.release-notes-view.lighterpack-list .is-readable-line-width {
+  max-width: none !important;
+  margin-left: auto;
+  margin-right: auto;
 }
