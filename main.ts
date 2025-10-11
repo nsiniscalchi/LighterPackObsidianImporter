@@ -239,7 +239,7 @@ async function HTMLscraper(html: string): Promise<void>{
 		description = container ? (container.textContent || '') : '';
 		console.log("Description: " + description);
 
-		await this.app.vault.create(folderPath+'/'+title+'.md', description+'\n\n');
+		await this.app.vault.create(folderPath+'/'+title+'.md', '---\ncssclasses: lighterpack-list\n---\n'+description+'\n\n');
 
 		container = doc.querySelector('span.lpWeightCell.lpNumber');
 		if(!container){
@@ -401,7 +401,7 @@ async function HTMLscraper(html: string): Promise<void>{
 				}
 				itemQty = container ? parseInt(container.textContent || '0') : 0;
 
-				this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', "---\nName: "+itemName+"\nDescription: "+itemDescription+"\nImage: "+itemImage+"\nCategory: "+categories[i]+"\nWorn: "+itemWorn+"\nConsumable: "+itemConsumable+"\nStar1: "+itemStar1+"\nStar2: "+itemStar2+"\nStar3: "+itemStar3+"\nPrice: "+currency+itemPrice+"\nWeight: "+itemWeight+itemsUnit+"\nQty: "+itemQty+"\n---\n");
+				this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', "---\nName: "+itemName+"\nDescription: "+itemDescription+"\nImage: "+itemImage+"\nCategory: "+categories[i]+"\nWorn: "+itemWorn+"\nConsumable: "+itemConsumable+"\nStar1: "+itemStar1+"\nStar2: "+itemStar2+"\nStar3: "+itemStar3+"\nPrice: "+currency+" "+ itemPrice+"\nWeight: "+itemWeight+" "+itemsUnit+"\nQty: "+itemQty+"\n---\n");
 			}
 		}
 		
@@ -410,7 +410,7 @@ async function HTMLscraper(html: string): Promise<void>{
 			const file = this.app.vault.getAbstractFileByPath(filePath);
 			if (file && file instanceof TFile) {
 				for(let i=0; i<categories.length; i++){	
-					const textToAppend = '```base\nfilters:\n  and:\n    - file.inFolder("'+folderPath+'/gear")\nviews:\n  - type: table\n    name: '+categories[i]+'\n    filters:\n      and:\n        - file.inFolder("'+folderPath+'/gear/'+categories[i]+'")\n    order:\n      - file.name\n      - Description\n      - Worn\n      - Consumable\n      - Price\n      - Weight\n      - Qty\n    sort:\n      - property: itemWeight\n        direction: DESC\n```\n\n';
+					const textToAppend = '```base\nfilters:\n  and:\n    - file.inFolder("'+folderPath+'/gear")\nviews:\n  - type: table\n    name: '+categories[i]+'\n    filters:\n      and:\n        - file.inFolder("'+folderPath+'/gear/'+categories[i]+'")\n    order:\n      - file.name\n      - Description\n      - Worn\n      - Consumable\n      - Price\n      - Weight\n      - Qty\n    sort:\n      - property: itemWeight\n        direction: DESC\n    columnSize:\n      file.name: 420\n      note.Description: 520\n      note.Worn: 90\n      note.Consumable: 110\n      note.Price: 110\n      note.Weight: 110\n      note.Qty: 50\n```\n\n';
 					const currentContent = await this.app.vault.read(file);
 					await this.app.vault.modify(file, currentContent + textToAppend);
 				}

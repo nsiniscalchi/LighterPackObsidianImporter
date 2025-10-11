@@ -6,3 +6,18 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+.markdown-preview-view.lighterpack-list .markdown-preview-section,
+.markdown-preview-view.lighterpack-list .markdown-preview-p {
+    max-width: none !important;
+}
+
+.cm-content.lighterpack-list,
+.cm-line.lighterpack-list,
+.markdown-source-view.lighterpack-list .cm-scroller {
+    max-width: none !important;
+}
+
+.markdown-preview-view.lighterpack-list .view-content {
+    max-width: none !important;
+}
