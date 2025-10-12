@@ -4,25 +4,24 @@ import { stringify } from 'querystring';
 
 // Remember to rename these classes and interfaces!
 
-/*
 interface LighterPackObsidianImporterSettings {
-	mySetting: string;
+	showRibbonIcon: boolean;
 }
 
 const DEFAULT_SETTINGS: LighterPackObsidianImporterSettings = {
-	mySetting: 'default'
+	showRibbonIcon: true
 }
-*/
 
 export default class LighterPackObsidianImporter extends Plugin {
-	/*
+	
 	settings: LighterPackObsidianImporterSettings;
-	*/
+	ribbonIconEl: HTMLElement | null = null;
 
 	async onload() {
-		/*
+
 		await this.loadSettings();
 
+		/*
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (_evt: MouseEvent) => {
 			// Called when the user clicks the icon.
@@ -71,10 +70,11 @@ export default class LighterPackObsidianImporter extends Plugin {
 				}
 			}
 		});
+		*/
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new SettingTab(this.app, this));
 
+		/*
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
@@ -102,13 +102,14 @@ export default class LighterPackObsidianImporter extends Plugin {
 				}).open();
 			}
 		});
+
+		this.updateRibbonIcon();
 	}
 
 	onunload() {
 
 	}
 
-	/*
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
@@ -116,7 +117,31 @@ export default class LighterPackObsidianImporter extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
-	*/
+
+	updateRibbonIcon() {
+		// Rimuovo l'icona esistente se presente
+		if (this.ribbonIconEl) {
+			this.ribbonIconEl.remove();
+			this.ribbonIconEl = null;
+		}
+
+		// Aggiungo l'icona se l'impostazione è true
+		if (this.settings.showRibbonIcon) {
+			this.ribbonIconEl = this.addRibbonIcon('backpack', 'Import LighterPack List', () => {
+				new UrlPromptModal(this.app, async (url: string) => {
+					if (!url) return;
+					try {
+						const response = await requestUrl({ url });
+						const html = response.text;
+						HTMLscraper(html);
+					} catch (e) {
+						new Notice("Unable to import the packing list.\nMore details in the console.");
+						console.error(e);
+					}
+				}).open();
+			});
+		}
+	}
 }
 
 /*
@@ -176,8 +201,7 @@ class UrlPromptModal extends Modal {
 	}
 }
 
-/*
-class SampleSettingTab extends PluginSettingTab {
+class SettingTab extends PluginSettingTab {
 	plugin: LighterPackObsidianImporter;
 
 	constructor(app: App, plugin: LighterPackObsidianImporter) {
@@ -191,18 +215,19 @@ class SampleSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+			.setName('Show Ribbon Icon')
+			.setDesc('Show the ribbon icon in the left sidebar')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.showRibbonIcon)
 				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.showRibbonIcon = value;
 					await this.plugin.saveSettings();
-				}));
+					this.display();
+					this.plugin.updateRibbonIcon();
+				})
+			);
 	}
 }
-*/
 
 async function HTMLscraper(html: string): Promise<void>{
 
