@@ -1,5 +1,6 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, requestUrl } from 'obsidian';
-import {listNoteProperties, itemNoteProperties, listNoteBases} from "formattedStrings"
+import {listNoteProperties, itemNoteProperties, listNoteBases, listNoteChartsAndDataviewjs} from "formattedStrings"
+import { stringify } from 'querystring';
 
 // Remember to rename these classes and interfaces!
 
@@ -240,8 +241,6 @@ async function HTMLscraper(html: string): Promise<void>{
 		description = container ? (container.textContent || '') : '';
 		console.log("Description: " + description);
 
-		await this.app.vault.create(folderPath+'/'+title+'.md', listNoteProperties+description);
-
 		container = doc.querySelector('span.lpWeightCell.lpNumber');
 		if(!container){
 			new Notice("Unable to find the packing list items unit.");
@@ -420,21 +419,28 @@ async function HTMLscraper(html: string): Promise<void>{
 				this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', itemNotePropertiesReplaced);
 			}
 		}
+
+
+		const listNoteChartsAndDataviewjsReplaced = listNoteChartsAndDataviewjs
+			.replace("{{folderPath}}", folderPath)
+			.replace("{{currency}}", currency)
+			.replace("{{totalsUnit}}", totalsUnit)
+			.replace("{{categories}}", JSON.stringify(categories));
+		await this.app.vault.create(folderPath+'/'+title+'.md', listNoteProperties+listNoteChartsAndDataviewjsReplaced+description);
 		
-		
-			const filePath = folderPath+'/'+title+'.md';
-			const file = this.app.vault.getAbstractFileByPath(filePath);
-			if (file && file instanceof TFile) {
-				for(let i=0; i<categories.length; i++){	
-					const textToAppend = listNoteBases
-						.replaceAll("{{folderPath}}", folderPath)
-						.replaceAll("{{categories[i]}}", categories[i]);
-					const currentContent = await this.app.vault.read(file);
-					await this.app.vault.modify(file, currentContent + textToAppend);
-				}
-			} else {
-			console.log("Nota non trovata: " + filePath);
+		const filePath = folderPath+'/'+title+'.md';
+		const file = this.app.vault.getAbstractFileByPath(filePath);
+		if (file && file instanceof TFile) {
+			for(let i=0; i<categories.length; i++){	
+				const textToAppend = listNoteBases
+					.replaceAll("{{folderPath}}", folderPath)
+					.replaceAll("{{categories[i]}}", categories[i]);
+				const currentContent = await this.app.vault.read(file);
+				await this.app.vault.modify(file, currentContent + textToAppend);
 			}
+		} else {
+		console.log("Nota non trovata: " + filePath);
+		}
 
 		
 	} catch (err) {
