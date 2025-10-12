@@ -209,7 +209,7 @@ async function HTMLscraper(html: string): Promise<void>{
 	let title = "";
 	let description = "";
 	let categories: string[] = [];
-	let itemsUnit = "";
+	let itemUnit = "";
 	let totalsUnit = "";
 	let currency = "";
 
@@ -247,9 +247,6 @@ async function HTMLscraper(html: string): Promise<void>{
 			console.log("span.lpWeightCell not found");
 			return;
 		}
-		container = container.querySelector('span.lpDisplay');
-		itemsUnit = container ? (container.textContent || '') : '';
-		console.log("Items Unit: " + itemsUnit);
 
 		container = doc.querySelector('span.lpSubtotalUnit');
 		if(!container){
@@ -392,6 +389,14 @@ async function HTMLscraper(html: string): Promise<void>{
 				}
 				itemWeight = container ? (container.textContent || '0') : '0';
 
+				container = nodeList2[j].querySelector('span.lpDisplay');
+				if(!container){
+					new Notice("Unable to find the packing list item weight.");
+					console.log("span.lpWeight not found");
+					return;
+				}
+				itemUnit = container ? (container.textContent || '0') : '0';
+
 
 				container = nodeList2[j].querySelector('span.lpQtyCell');
 				if(!container){
@@ -414,7 +419,7 @@ async function HTMLscraper(html: string): Promise<void>{
 					.replace("{{currency}}", currency)
 					.replace("{{itemPrice}}", itemPrice.toString())
 					.replace("{{itemWeight}}", itemWeight.toString())
-					.replace("{{itemsUnit}}", itemsUnit)
+					.replace("{{itemUnit}}", itemUnit)
 					.replace("{{itemQty}}", itemQty.toString());
 				this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', itemNotePropertiesReplaced);
 			}

@@ -16,7 +16,7 @@ Star1: {{itemStar1}}
 Star2: {{itemStar2}}
 Star3: {{itemStar3}}
 Price: {{currency}} {{itemPrice}}
-Weight: {{itemWeight}} {{itemsUnit}}
+Weight: {{itemWeight}} {{itemUnit}}
 Qty: {{itemQty}}
 ---
 `;
@@ -40,8 +40,8 @@ views:
       - Weight
       - Qty
     sort:
-      - property: itemWeight
-        direction: DESC
+      - property: itemName
+        direction: ASC
     columnSize:
       file.name: 420
       note.Description: 520
@@ -54,28 +54,66 @@ views:
 
 export const listNoteChartsAndDataviewjs = "\n```dataviewjs\n"+
 `const parseWeight = (weight) => weight ? parseFloat(weight.toString().split(" ")[0]) : 0;
+const parseItemUnit = (weight) => weight ? (weight.toString().split(" ")[1]) : " ";
 const parsePrice = (price) => price ? parseFloat(price.toString().split(" ")[1]) : 0;
 
 const pages = dv.pages('"{{folderPath}}/gear"').where(page => page.Weight && page.Price);
 
-const categoriesData = {};
+let categoriesData = {};
 let totalWeight = 0, totalPrice = 0, consumableWeight = 0, wornWeight = 0;
 let currencySymbol = '{{currency}}', weightUnit = '{{totalsUnit}}';
 
 for (const page of pages) {
     const category = page.Category;
     const weight = parseWeight(page.Weight);
+    const itemUnit = parseItemUnit(page.Weight);
     const price = parsePrice(page.Price);
 
-    totalWeight += weight;
+    let weightConverted;
+    
+    if(itemUnit == 'g' && weightUnit == 'g'){
+      weightConverted = weight;
+    } else if(itemUnit == 'g' && weightUnit == 'kg'){
+      weightConverted = weight/1000;
+    } else if(itemUnit == 'g' && weightUnit == 'oz'){
+      weightConverted = weight/28.3495;
+    } else if(itemUnit == 'g' && weightUnit == 'lb'){
+      weightConverted = weight/453.592;
+    } else if(itemUnit == 'kg' && weightUnit == 'g'){
+      weightConverted = weight*1000;
+    } else if(itemUnit == 'kg' && weightUnit == 'kg'){
+      weightConverted = weight
+    } else if(itemUnit == 'kg' && weightUnit == 'oz'){
+      weightConverted = weight*35.27396195;
+    } else if(itemUnit == 'kg' && weightUnit == 'lb'){
+      weightConverted = weight*2.2046226218;
+    } else if(itemUnit == 'oz' && weightUnit == 'g'){
+      weightConverted = weight*28.3495;
+    } else if(itemUnit == 'oz' && weightUnit == 'kg'){
+      weightConverted = weight/35.27396195;
+    } else if(itemUnit == 'oz' && weightUnit == 'oz'){
+      weightConverted = weight
+    } else if(itemUnit == 'oz' && weightUnit == 'lb'){
+      weightConverted = weight/16;
+    } else if(itemUnit == 'lb' && weightUnit == 'g'){
+      weightConverted = weight*453.592;
+    } else if(itemUnit == 'lb' && weightUnit == 'kg'){
+      weightConverted = weight/2.2046226218;
+    } else if(itemUnit == 'lb' && weightUnit == 'oz'){
+      weightConverted = weight*16;
+    } else if(itemUnit == 'lb' && weightUnit == 'lb'){
+      weightConverted = weight;
+    }
+
+    totalWeight += weightConverted;
     totalPrice += price;
-    if (page.Consumable) consumableWeight += weight;
-    if (page.Worn) wornWeight += weight;
+    if (page.Consumable) consumableWeight += weightConverted;
+    if (page.Worn) wornWeight += weightConverted;
 
     if (!categoriesData[category]) {
         categoriesData[category] = { weight: 0, price: 0 };
     }
-    categoriesData[category].weight += weight;
+    categoriesData[category].weight += weightConverted;
     categoriesData[category].price += price;
 }
 
