@@ -7,6 +7,14 @@ If your plugin does not need CSS, delete this file.
 
 */
 
+div.markdown-preview-view.lighterpack-list .metadata-container {
+    display: none !important;
+}
+
+div.markdown-source-view.lighterpack-list .metadata-container {
+    display: none !important;
+}
+
 .markdown-source-view.mod-cm6.is-readable-line-width.lighterpack-list .cm-sizer {
   max-width: none !important;
   margin-left: auto;
