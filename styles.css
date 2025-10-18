@@ -47,6 +47,9 @@ div.markdown-source-view.lighterpack-list .metadata-container {
     width: fit-content !important;
     margin: 0 auto !important;
 }
+.lp-text-col {
+    flex: 0 0 250px !important;
+}
 .lp-chart-col {
     flex: 0 0 250px !important;
 }

@@ -64,9 +64,10 @@ const parsePrice = (price) => price ? parseFloat(price.toString().split(" ")[1])
 const pages = dv.pages('"{{folderPath}}/gear"').where(page => page.Weight !== undefined && page.Price !== undefined);
 
 if(pages.length === 0){
-  const container = dv.container.createEl('div', { cls: 'lp-container' });
-  container.createEl('p', { text: 'No items found in the packing list.' });
-} else{
+  dv.container.innerHTML = "";
+  const container = dv.container.createEl('div', { cls: 'lp-container' });\n`+
+  "container.createEl('p', { cls: 'lp-text-col' }).innerHTML = `<p>No items found in the packing list.</p>`;\n"+
+`} else{
   let categoriesData = {};
   let totalWeight = 0, totalPrice = 0, consumableWeight = 0, wornWeight = 0;
   let currencySymbol = '{{currency}}', weightUnit = '{{totalsUnit}}';
@@ -162,7 +163,7 @@ if(pages.length === 0){
   if (app.plugins.plugins['obsidian-charts']) {
       window.renderChart(chartData, chartCol);
   } else {
-      chartCol.setText("Plugin 'Obsidian Charts' non trovato. Per favore, installalo e abilitalo.");
+      chartCol.setText("The 'Obsidian Charts' plugin was not found. Please install and enable it.");
   }
 
   const table = tableCol.createEl('table', { cls: 'lp-table' });
