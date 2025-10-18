@@ -96,13 +96,13 @@ export default class LighterPackObsidianImporter extends Plugin {
 						url = "https://"+url;
 					}
 					if(regexURL.test(url) == false){
-						new Notice("Invalid URL. Please enter a valid lighterpack.com URL.");
+						new Notice("Invalid URL.\nPlease enter a valid lighterpack.com URL.");
 						return;
 					}
 					try {
 						const response = await requestUrl({ url });
 						const html = response.text;
-						HTMLscraper(html);
+						importList(html);
 					} catch (e) {
 						new Notice("Unable to import the packing list.\nMore details in the console.");
 						console.error(e);
@@ -143,13 +143,13 @@ export default class LighterPackObsidianImporter extends Plugin {
 						url = "https://"+url;
 					}
 					if(regexURL.test(url) == false){
-						new Notice("Invalid URL. Please enter a valid lighterpack.com URL.");
+						new Notice("Invalid URL.\nPlease enter a valid lighterpack.com URL.");
 						return;
 					}
 					try {
 						const response = await requestUrl({ url });
 						const html = response.text;
-						HTMLscraper(html);
+						importList(html);
 					} catch (e) {
 						new Notice("Unable to import the packing list.\nMore details in the console.");
 						console.error(e);
@@ -245,7 +245,7 @@ class SettingTab extends PluginSettingTab {
 	}
 }
 
-async function HTMLscraper(html: string): Promise<void>{
+async function importList(html: string): Promise<void>{
 
 	let title = "";
 	let description = "";
@@ -281,15 +281,9 @@ async function HTMLscraper(html: string): Promise<void>{
 			folderPath = folderPath+"("+duplicatePackingListCounter+")";
 		}
 		if(this.app.vault.getAbstractFileByPath(folderPath) != null && this.app.vault.getAbstractFileByPath(folderPath) instanceof TFolder){console.log("AAA");}
-		this.app.vault.createFolder(folderPath);
-
-		this.app.vault.createFolder(folderPath+'/gear');
-
 		
 		container = doc.querySelector('div#lpListDescription');
 		if(!container){
-			new Notice("Unable to find the packing list description.");
-			console.log("div#lpListDescription not found");
 			description = "";
 		} else{
 			container = container.querySelector('p');
@@ -300,8 +294,7 @@ async function HTMLscraper(html: string): Promise<void>{
 
 		container = doc.querySelector('span.lpSubtotalUnit');
 		if(!container){
-			new Notice("Unable to find the packing list totals unit.");
-			console.log("span.lpSubtotalUnit not found");
+			new Notice("Unable to find the packing list total weight unit.");
 			return;
 		}
 		totalsUnit = container ? (container.textContent || '') : '';
@@ -309,7 +302,6 @@ async function HTMLscraper(html: string): Promise<void>{
 
 		container = doc.querySelector('span.lpPriceCell.lpNumber');
 		if(!container){
-			new Notice("Unable to find the packing list currency.");
 			console.log("span.lpPriceCell not found");
 			currency = "";
 		} else {
@@ -317,12 +309,23 @@ async function HTMLscraper(html: string): Promise<void>{
 		}
 		console.log("Currency: " + currency);
 
+		await this.app.vault.createFolder(folderPath);
+		await this.app.vault.createFolder(folderPath+'/gear');
+
 		let nodeList = doc.querySelectorAll('li.lpCategory');
 		for(let i=0; i<nodeList.length; i++){
 			categoryName = "";
 			container = nodeList[i].querySelector('h2');
 			if(!container){
-				new Notice("Unable to find the packing list category name.");
+				if(i===0){
+					new Notice("Unable to find the first category name.");
+				} else if(i===1){
+					new Notice("Unable to find the second category name.");
+				} else if(i===2){
+					new Notice("Unable to find the third category name.");
+				} else{
+					new Notice("Unable to find the "+(i+1).toString()+"th category name.");
+				}
 				console.log("h2 not found");
 				return;
 			}
@@ -341,7 +344,7 @@ async function HTMLscraper(html: string): Promise<void>{
 				categories.push(categoryName);
 			}
 			
-			this.app.vault.createFolder(folderPath+'/gear/'+categories[i]);
+			await this.app.vault.createFolder(folderPath+'/gear/'+categories[i]);
 
 			let nodeList2 = nodeList[i].querySelectorAll('li.lpItem');
 			for(let j=0; j<nodeList2.length; j++){
@@ -361,7 +364,6 @@ async function HTMLscraper(html: string): Promise<void>{
 
 				container = nodeList2[j].querySelector('span.lpImageCell');
 				if(!container){
-					new Notice("Unable to find the packing list item image.");
 					console.log("span.lpImageCell not found");
 					itemImage = "";
 				} else {
@@ -371,7 +373,15 @@ async function HTMLscraper(html: string): Promise<void>{
 				
 				container = nodeList2[j].querySelector('span.lpName');
 				if(!container){
-					new Notice("Unable to find the packing list item name.");
+					if(j===0){
+						new Notice("Unable to find the first item name.");
+					} else if(j===1){
+						new Notice("Unable to find the second item name.");
+					} else if(j===2){
+						new Notice("Unable to find the third item name.");
+					} else{
+						new Notice("Unable to find the "+(j+1).toString()+"th item name.");
+					}
 					console.log("span.lpName not found");
 					return;
 				}
@@ -393,7 +403,6 @@ async function HTMLscraper(html: string): Promise<void>{
 
 				let containerCopy = nodeList2[j].querySelector('a.lpHref');
 				if(!containerCopy){
-					new Notice("Unable to find the packing list item link.");
 					console.log("a.lpHref not found");
 					itemLink = "";
 				} else {
@@ -402,7 +411,6 @@ async function HTMLscraper(html: string): Promise<void>{
 
 				container = nodeList2[j].querySelector('span.lpDescription');
 				if(!container){
-					new Notice("Unable to find the packing list item description.");
 					console.log("span.lpDescription not found");
 					return;
 				}
@@ -429,7 +437,15 @@ async function HTMLscraper(html: string): Promise<void>{
 				container = nodeList2[j].querySelector('span.lpActionsCell');
 				containerCopy = nodeList2[j].querySelector('span.lpActionsCell');
 				if(!container || !containerCopy){
-					new Notice("Unable to find the packing list actions cell.");
+					if(j===0){
+						new Notice("Unable to find the first item actions cell.");
+					} else if(j===1){
+						new Notice("Unable to find the second item actions cell.");
+					} else if(j===2){
+						new Notice("Unable to find the third item actions cell.");
+					} else{
+						new Notice("Unable to find the "+(j+1).toString()+"th item actions cell.");
+					}
 					console.log("span.lpActionsCell not found");
 					return;
 				} else{
@@ -468,7 +484,6 @@ async function HTMLscraper(html: string): Promise<void>{
 				
 				container = nodeList2[j].querySelector('span.lpPriceCell');
 				if(!container){
-					new Notice("Unable to find the packing list item price.");
 					console.log("span.lpPriceCell not found");
 					itemPrice = "0";
 				} else{
@@ -477,7 +492,15 @@ async function HTMLscraper(html: string): Promise<void>{
 
 				container = nodeList2[j].querySelector('span.lpWeight');
 				if(!container){
-					new Notice("Unable to find the packing list item weight.");
+					if(j===0){
+						new Notice("Unable to find the first item weight.");
+					} else if(j===1){
+						new Notice("Unable to find the second item weight.");
+					} else if(j===2){
+						new Notice("Unable to find the third item weight.");
+					} else{
+						new Notice("Unable to find the "+(j+1).toString()+"th item weight.");
+					}
 					console.log("span.lpWeight not found");
 					return;
 				}
@@ -485,7 +508,15 @@ async function HTMLscraper(html: string): Promise<void>{
 
 				container = nodeList2[j].querySelector('span.lpDisplay');
 				if(!container){
-					new Notice("Unable to find the packing list item weight.");
+					if(j===0){
+						new Notice("Unable to find the first item's weight unit.");
+					} else if(j===1){
+						new Notice("Unable to find the second item's weight unit.");
+					} else if(j===2){
+						new Notice("Unable to find the third item's weight unit.");
+					} else{
+						new Notice("Unable to find the "+(j+1).toString()+"th item's weight unit.");
+					}
 					console.log("span.lpWeight not found");
 					return;
 				}
@@ -494,7 +525,15 @@ async function HTMLscraper(html: string): Promise<void>{
 
 				container = nodeList2[j].querySelector('span.lpQtyCell');
 				if(!container){
-					new Notice("Unable to find the packing list item quantity.");
+					if(j===0){
+						new Notice("Unable to find the first item quantity.");
+					} else if(j===1){
+						new Notice("Unable to find the second item quantity.");
+					} else if(j===2){
+						new Notice("Unable to find the third item quantity.");
+					} else{
+						new Notice("Unable to find the "+(j+1).toString()+"th item quantity.");
+					}
 					console.log("span.lpQtyCell not found");
 					return;
 				}
