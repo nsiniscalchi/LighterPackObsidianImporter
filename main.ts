@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, requestUrl } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, requestUrl } from 'obsidian';
 import {listNoteProperties, itemNoteProperties, listNoteBases, listNoteChartsAndDataviewjs} from "formattedStrings"
 import { stringify } from 'querystring';
 
@@ -237,6 +237,9 @@ async function HTMLscraper(html: string): Promise<void>{
 	let itemUnit = "";
 	let totalsUnit = "";
 	let currency = "";
+	let categoryName = "";
+	let items: string[] = [];
+	let duplicatePackingListCounter = 0;
 
 	try {
 		const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -248,9 +251,20 @@ async function HTMLscraper(html: string): Promise<void>{
 			return;
 		}
 		title = container ? (container.textContent || '') : '';
+		if(title === ""){
+			title = "UnnamedPackingList";
+		}
 		let folderPath = title.replaceAll(" ", "");
 		console.log("Title: " + title);
 
+		if(this.app.vault.getAbstractFileByPath(folderPath) != null && this.app.vault.getAbstractFileByPath(folderPath) instanceof TFolder){
+			duplicatePackingListCounter++;
+			while(this.app.vault.getAbstractFileByPath(folderPath+"("+duplicatePackingListCounter+")") != null && this.app.vault.getAbstractFileByPath(folderPath+"("+duplicatePackingListCounter+")") instanceof TFolder){
+				duplicatePackingListCounter++;
+			}
+			folderPath = folderPath+"("+duplicatePackingListCounter+")";
+		}
+		if(this.app.vault.getAbstractFileByPath(folderPath) != null && this.app.vault.getAbstractFileByPath(folderPath) instanceof TFolder){console.log("AAA");}
 		this.app.vault.createFolder(folderPath);
 
 		this.app.vault.createFolder(folderPath+'/gear');
@@ -260,18 +274,13 @@ async function HTMLscraper(html: string): Promise<void>{
 		if(!container){
 			new Notice("Unable to find the packing list description.");
 			console.log("div#lpListDescription not found");
-			return;
+			description = "";
+		} else{
+			container = container.querySelector('p');
+			description = container ? (container.textContent || '') : '';
 		}
-		container = container.querySelector('p');
-		description = container ? (container.textContent || '') : '';
+		
 		console.log("Description: " + description);
-
-		container = doc.querySelector('span.lpWeightCell.lpNumber');
-		if(!container){
-			new Notice("Unable to find the packing list items unit.");
-			console.log("span.lpWeightCell not found");
-			return;
-		}
 
 		container = doc.querySelector('span.lpSubtotalUnit');
 		if(!container){
@@ -286,20 +295,35 @@ async function HTMLscraper(html: string): Promise<void>{
 		if(!container){
 			new Notice("Unable to find the packing list currency.");
 			console.log("span.lpPriceCell not found");
-			return;
+			currency = "";
+		} else {
+			currency = container ? (container.textContent.trim().slice(0, 1) || '') : '';
 		}
-		currency = container ? (container.textContent.trim().slice(0, 1) || '') : '';
 		console.log("Currency: " + currency);
 
 		let nodeList = doc.querySelectorAll('li.lpCategory');
 		for(let i=0; i<nodeList.length; i++){
+			categoryName = "";
 			container = nodeList[i].querySelector('h2');
 			if(!container){
-				new Notice("Unable to find the packing list category.");
+				new Notice("Unable to find the packing list category name.");
 				console.log("h2 not found");
 				return;
 			}
-			categories.push(container ? (container.textContent || '') : '');
+			categoryName = (container ? (container.textContent || '') : '').trim();
+			if(categoryName === ""){
+				categoryName = "UnnamedCategory";
+			}
+			if(categories.includes(categoryName)){
+				let k = 1;
+				while(categories.includes(categoryName+"("+k+")")){
+					k++;
+				}
+				categoryName = categoryName+"("+k+")";
+				categories.push(categoryName);
+			} else {
+				categories.push(categoryName);
+			}
 			
 			this.app.vault.createFolder(folderPath+'/gear/'+categories[i]);
 
@@ -310,9 +334,9 @@ async function HTMLscraper(html: string): Promise<void>{
 				let itemDescription = "";
 				let itemWorn = false;
 				let itemConsumable = false;
-				let itemStar1;
-				let itemStar2;
-				let itemStar3;
+				let itemStar1 = false;
+				let itemStar2 = false;
+				let itemStar3 = false;
 				let itemPrice = "";
 				let itemWeight = "";
 				let itemQty = 0;
@@ -322,10 +346,11 @@ async function HTMLscraper(html: string): Promise<void>{
 				if(!container){
 					new Notice("Unable to find the packing list item image.");
 					console.log("span.lpImageCell not found");
-					return;
+					itemImage = "";
+				} else {
+					container = container.querySelector('img');
+					itemImage = container ? (container.getAttribute('src') || '') : '';
 				}
-				container = container.querySelector('img');
-				itemImage = container ? (container.getAttribute('src') || '') : '';
 				
 				container = nodeList2[j].querySelector('span.lpName');
 				if(!container){
@@ -335,6 +360,19 @@ async function HTMLscraper(html: string): Promise<void>{
 				}
 				itemName = container ? (container.textContent.trim() || '') : '';
 				itemName = itemName.replaceAll(":", "=");
+				if(itemName === ""){
+					itemName = "UnnamedItem";
+				}
+				if(items.includes(itemName)){
+					let w = 1;
+					while(items.includes(itemName+"("+w+")")){
+						w++;
+					}
+					itemName = itemName+"("+w+")";
+					items.push(itemName);
+				} else {
+					items.push(itemName);
+				}
 
 				container = nodeList2[j].querySelector('span.lpDescription');
 				if(!container){
@@ -344,6 +382,9 @@ async function HTMLscraper(html: string): Promise<void>{
 				}
 				itemDescription = container ? (container.textContent.trim() || '') : '';
 				itemDescription = itemDescription.replaceAll(":", "=");
+				if(itemDescription === ""){
+					itemDescription = "";
+				}
 
 				container = nodeList2[j].querySelector('i.lpWorn.lpActive');
 				if(!container){
@@ -365,46 +406,48 @@ async function HTMLscraper(html: string): Promise<void>{
 					new Notice("Unable to find the packing list actions cell.");
 					console.log("span.lpActionsCell not found");
 					return;
-				}
-				container = containerCopy.querySelector('i.lpStar.lpHidden');
-				if(!container){
-					container = containerCopy.querySelector('i.lpStar1');
+				} else{
+					container = containerCopy.querySelector('i.lpStar.lpHidden');
 					if(!container){
-						container = containerCopy.querySelector('i.lpStar2');
+						container = containerCopy.querySelector('i.lpStar1');
 						if(!container){
-							container = containerCopy.querySelector('i.lpStar3');
+							container = containerCopy.querySelector('i.lpStar2');
 							if(!container){
-								itemStar1 = false;
-								itemStar2 = false;
-								itemStar3 = false;
+								container = containerCopy.querySelector('i.lpStar3');
+								if(!container){
+									itemStar1 = false;
+									itemStar2 = false;
+									itemStar3 = false;
+								} else {
+									itemStar1 = false;
+									itemStar2 = false;
+									itemStar3 = true;
+								}
 							} else {
 								itemStar1 = false;
-								itemStar2 = false;
-								itemStar3 = true;
+								itemStar2 = true;
+								itemStar3 = false;
 							}
 						} else {
-							itemStar1 = false;
-							itemStar2 = true;
+							itemStar1 = true;
+							itemStar2 = false;
 							itemStar3 = false;
 						}
 					} else {
-						itemStar1 = true;
+						itemStar1 = false;
 						itemStar2 = false;
 						itemStar3 = false;
 					}
-				} else {
-					itemStar1 = false;
-					itemStar2 = false;
-					itemStar3 = false;
 				}
-
+				
 				container = nodeList2[j].querySelector('span.lpPriceCell');
 				if(!container){
 					new Notice("Unable to find the packing list item price.");
 					console.log("span.lpPriceCell not found");
-					return;
+					itemPrice = "0";
+				} else{
+					itemPrice = container ? (container.textContent.trim().slice(1) || '0') : '0';
 				}
-				itemPrice = container ? (container.textContent.trim().slice(1) || '0') : '0';
 
 				container = nodeList2[j].querySelector('span.lpWeight');
 				if(!container){
@@ -446,7 +489,9 @@ async function HTMLscraper(html: string): Promise<void>{
 					.replace("{{itemWeight}}", itemWeight.toString())
 					.replace("{{itemUnit}}", itemUnit)
 					.replace("{{itemQty}}", itemQty.toString());
-				this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', itemNotePropertiesReplaced);
+
+				console.log("added item:" +"\nname:" + itemName + "\ndescription:" + itemDescription + "\nimage:" + itemImage + "\ncategory:" + categories[i] + "\nworn:" + itemWorn + "\nconsumable:" + itemConsumable + "\nstar1:" + itemStar1 + "\nstar2:" + itemStar2 + "\nstar3:" + itemStar3 + "\ncurrency:" + currency + "\nprice:" + itemPrice.toString() + "\nweight:" + itemWeight.toString() + "\nunit:" + itemUnit + "\nqty:" + itemQty.toString());		
+				await this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', itemNotePropertiesReplaced);
 			}
 		}
 
