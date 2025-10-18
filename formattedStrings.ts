@@ -1,3 +1,5 @@
+export const regexURL = /^https?:\/\/(www\.)?lighterpack\.com\/r\/[a-zA-Z0-9]+$/;
+
 export const listNoteProperties =
 `---
 cssclasses: lighterpack-list

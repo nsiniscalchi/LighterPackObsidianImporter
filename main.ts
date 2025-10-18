@@ -1,5 +1,5 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, requestUrl } from 'obsidian';
-import {listNoteProperties, itemNoteProperties, listNoteBases, listNoteChartsAndDataviewjs} from "formattedStrings"
+import {regexURL, listNoteProperties, itemNoteProperties, listNoteBases, listNoteChartsAndDataviewjs} from "formattedStrings"
 import { stringify } from 'querystring';
 
 // Remember to rename these classes and interfaces!
@@ -20,7 +20,7 @@ export default class LighterPackObsidianImporter extends Plugin {
 	async onload() {
 
 		await this.loadSettings();
-
+		
 		/*
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (_evt: MouseEvent) => {
@@ -91,6 +91,14 @@ export default class LighterPackObsidianImporter extends Plugin {
 			callback: () => {
 				new UrlPromptModal(this.app, async (url: string) => {
 					if (!url) return;
+					if(!url.startsWith("https://")){
+						console.log("Adding https:// to URL");
+						url = "https://"+url;
+					}
+					if(regexURL.test(url) == false){
+						new Notice("Invalid URL. Please enter a valid lighterpack.com URL.");
+						return;
+					}
 					try {
 						const response = await requestUrl({ url });
 						const html = response.text;
@@ -130,6 +138,14 @@ export default class LighterPackObsidianImporter extends Plugin {
 			this.ribbonIconEl = this.addRibbonIcon('backpack', 'Import LighterPack List', () => {
 				new UrlPromptModal(this.app, async (url: string) => {
 					if (!url) return;
+					if(!url.startsWith("https://")){
+						console.log("Adding https:// to URL");
+						url = "https://"+url;
+					}
+					if(regexURL.test(url) == false){
+						new Notice("Invalid URL. Please enter a valid lighterpack.com URL.");
+						return;
+					}
 					try {
 						const response = await requestUrl({ url });
 						const html = response.text;
