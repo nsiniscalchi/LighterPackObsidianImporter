@@ -331,6 +331,7 @@ async function HTMLscraper(html: string): Promise<void>{
 			for(let j=0; j<nodeList2.length; j++){
 				let itemImage = "";
 				let itemName = "";
+				let itemLink = "";
 				let itemDescription = "";
 				let itemWorn = false;
 				let itemConsumable = false;
@@ -374,6 +375,15 @@ async function HTMLscraper(html: string): Promise<void>{
 					items.push(itemName);
 				}
 
+				let containerCopy = nodeList2[j].querySelector('a.lpHref');
+				if(!containerCopy){
+					new Notice("Unable to find the packing list item link.");
+					console.log("a.lpHref not found");
+					itemLink = "";
+				} else {
+					itemLink = containerCopy ? (containerCopy.getAttribute('href') || '') : '';
+				}
+
 				container = nodeList2[j].querySelector('span.lpDescription');
 				if(!container){
 					new Notice("Unable to find the packing list item description.");
@@ -401,7 +411,7 @@ async function HTMLscraper(html: string): Promise<void>{
 				}
 
 				container = nodeList2[j].querySelector('span.lpActionsCell');
-				let containerCopy = nodeList2[j].querySelector('span.lpActionsCell');
+				containerCopy = nodeList2[j].querySelector('span.lpActionsCell');
 				if(!container || !containerCopy){
 					new Notice("Unable to find the packing list actions cell.");
 					console.log("span.lpActionsCell not found");
@@ -476,6 +486,7 @@ async function HTMLscraper(html: string): Promise<void>{
 
 				const itemNotePropertiesReplaced = itemNoteProperties
 					.replace("{{itemName}}", itemName)
+					.replace("{{itemLink}}", itemLink)
 					.replace("{{itemDescription}}", itemDescription)
 					.replace("{{itemImage}}", itemImage)
 					.replace("{{itemCategory}}", categories[i])

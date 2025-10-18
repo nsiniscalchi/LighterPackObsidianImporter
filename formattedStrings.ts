@@ -9,6 +9,7 @@ export const itemNoteProperties =
 Name: {{itemName}}
 Description: {{itemDescription}}
 Image: {{itemImage}}
+Link: {{itemLink}}
 Category: {{itemCategory}}
 Worn: {{itemWorn}}
 Consumable: {{itemConsumable}}
