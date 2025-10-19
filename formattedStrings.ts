@@ -56,7 +56,7 @@ views:
 `+"```";
 
 export const listNoteChartsAndDataviewjs = "\n```dataviewjs\n"+
-`const parseQty = (qty) => qty ? parseInt(qty.toString()) : 1;
+`const parseQty = (qty) => qty ? parseInt(qty.toString()) : 0;
 const parseWeight = (weight) => weight ? parseFloat(weight.toString().split(" ")[0]) : 0;
 const parseItemUnit = (weight) => weight ? (weight.toString().split(" ")[1]) : " ";
 const parsePrice = (price) => price ? parseFloat(price.toString().split(" ")[1]) : 0;
