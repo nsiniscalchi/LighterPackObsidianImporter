@@ -1,5 +1,6 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, requestUrl } from "obsidian";
 import {regexURL, listNoteProperties, itemNoteProperties, listNoteBases, listNoteChartsAndDataviewjs} from "formattedStrings";
+import TurndownService from "turndown";
 
 // Remember to rename these classes and interfaces!
 
@@ -282,10 +283,11 @@ async function importList(app: App, html: string): Promise<void>{
 		
 		container = doc.querySelector("div#lpListDescription");
 		if(!container){
-			description = "";
+			description = "\n\n";
 		} else{
-			container = container.querySelector("p");
-			description = container ? (container.textContent || "") : "";
+			const turndownService = new TurndownService();
+			const markdownContent = turndownService.turndown(container.innerHTML.trim());
+			description = markdownContent+"\n\n";
 		}
 		
 		console.log("Description: " + description);
