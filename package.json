@@ -15,6 +15,7 @@
 		"@eslint/eslintrc": "^3.3.1",
 		"@eslint/js": "^9.37.0",
 		"@types/node": "^16.18.126",
+		"@types/turndown": "^5.0.5",
 		"@typescript-eslint/eslint-plugin": "8.45.0",
 		"@typescript-eslint/parser": "8.45.0",
 		"builtin-modules": "3.3.0",
@@ -25,6 +26,7 @@
 		"globals": "^16.4.0",
 		"obsidian": "latest",
 		"tslib": "2.4.0",
+		"turndown": "^7.2.1",
 		"typescript": "^5.6.3"
 	}
 }

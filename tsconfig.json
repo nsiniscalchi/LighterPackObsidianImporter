@@ -17,7 +17,8 @@
       "ES6",
       "ES7",
       "es2023"
-    ]
+    ],
+    "esModuleInterop": true
   },
   "include": [
     "**/*.ts"
