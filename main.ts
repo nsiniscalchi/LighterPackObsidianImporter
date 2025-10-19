@@ -1,6 +1,5 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, requestUrl } from 'obsidian';
-import {regexURL, listNoteProperties, itemNoteProperties, listNoteBases, listNoteChartsAndDataviewjs} from "formattedStrings"
-import { stringify } from 'querystring';
+import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, requestUrl } from "obsidian";
+import {regexURL, listNoteProperties, itemNoteProperties, listNoteBases, listNoteChartsAndDataviewjs} from "formattedStrings";
 
 // Remember to rename these classes and interfaces!
 
@@ -10,7 +9,7 @@ interface LighterPackObsidianImporterSettings {
 
 const DEFAULT_SETTINGS: LighterPackObsidianImporterSettings = {
 	showRibbonIcon: true
-}
+};
 
 export default class LighterPackObsidianImporter extends Plugin {
 	
@@ -90,19 +89,19 @@ export default class LighterPackObsidianImporter extends Plugin {
 			name: "Import a packing list from a lighterpack.com URL",
 			callback: () => {
 				new UrlPromptModal(this.app, async (url: string) => {
-					if (!url) return;
+					if (!url) {return;}
 					if(!url.startsWith("https://")){
 						console.log("Adding https:// to URL");
 						url = "https://"+url;
 					}
-					if(regexURL.test(url) == false){
+					if(regexURL.test(url) === false){
 						new Notice("Invalid URL.\nPlease enter a valid lighterpack.com URL.");
 						return;
 					}
 					try {
 						const response = await requestUrl({ url });
 						const html = response.text;
-						importList(html);
+						void importList(this.app, html);
 					} catch (e) {
 						new Notice("Unable to import the packing list.\nMore details in the console.");
 						console.error(e);
@@ -119,7 +118,7 @@ export default class LighterPackObsidianImporter extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as LighterPackObsidianImporterSettings;
 	}
 
 	async saveSettings() {
@@ -135,21 +134,21 @@ export default class LighterPackObsidianImporter extends Plugin {
 
 		// Aggiungo l'icona se l'impostazione è true
 		if (this.settings.showRibbonIcon) {
-			this.ribbonIconEl = this.addRibbonIcon('backpack', 'Import LighterPack List', () => {
+			this.ribbonIconEl = this.addRibbonIcon("backpack", "Import lighterpack list", () => {
 				new UrlPromptModal(this.app, async (url: string) => {
-					if (!url) return;
+					if (!url) {return;}
 					if(!url.startsWith("https://")){
 						console.log("Adding https:// to URL");
 						url = "https://"+url;
 					}
-					if(regexURL.test(url) == false){
+					if(regexURL.test(url) === false){
 						new Notice("Invalid URL.\nPlease enter a valid lighterpack.com URL.");
 						return;
 					}
 					try {
 						const response = await requestUrl({ url });
 						const html = response.text;
-						importList(html);
+						void importList(this.app, html);
 					} catch (e) {
 						new Notice("Unable to import the packing list.\nMore details in the console.");
 						console.error(e);
@@ -180,7 +179,7 @@ class SampleModal extends Modal {
 
 class UrlPromptModal extends Modal {
 
-	constructor(app: App, onSubmit: (url: string) => void) {
+	constructor(app: App, onSubmit: (url: string) => Promise<void>) {
 		super(app);
 		
 		this.onSubmit = onSubmit;
@@ -195,7 +194,7 @@ class UrlPromptModal extends Modal {
 		contentEl.createEl("div", { cls: "setting-divider" });
 
 		new Setting(contentEl)
-			.setName("lighterpack.com URL")
+			.setName("Insert a lighterpack.com URL.")
 			.addText(text => text
 				.setPlaceholder("https://lighterpack.com/r/...")
 				.onChange(value => url = value)
@@ -205,12 +204,12 @@ class UrlPromptModal extends Modal {
 				.setCta()
 				.onClick(() => {
 					this.close();
-					this.onSubmit(url);
+					void this.onSubmit(url);
 				})
 			);
 	}
 
-	onSubmit: (url: string) => void;
+	onSubmit: (url: string) => Promise<void>;
 
 	onClose() {
 		this.contentEl.empty();
@@ -231,8 +230,8 @@ class SettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Show Ribbon Icon')
-			.setDesc('Show the ribbon icon in the left sidebar')
+			.setName("Show ribbon icon")
+			.setDesc("Show the ribbon icon in the left sidebar")
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.showRibbonIcon)
 				.onChange(async (value) => {
@@ -245,77 +244,76 @@ class SettingTab extends PluginSettingTab {
 	}
 }
 
-async function importList(html: string): Promise<void>{
+async function importList(app: App, html: string): Promise<void>{
 
 	let title = "";
 	let description = "";
-	let categories: string[] = [];
+	const categories: string[] = [];
 	let itemUnit = "";
 	let totalsUnit = "";
 	let currency = "";
 	let categoryName = "";
-	let items: string[] = [];
+	const items: string[] = [];
 	let duplicatePackingListCounter = 0;
 
 	try {
-		const doc = new DOMParser().parseFromString(html, 'text/html');
+		const doc = new DOMParser().parseFromString(html, "text/html");
 		
-		let container = doc.querySelector('h1.lpListName');
+		let container = doc.querySelector("h1.lpListName");
 		if(!container){
 			new Notice("Unable to find the packing list title.");
 			console.log("h1.lpListName not found");
 			return;
 		}
-		title = container ? (container.textContent || '') : '';
+		title = container ? (container.textContent || "") : "";
 		if(title === ""){
 			title = "UnnamedPackingList";
 		}
 		let folderPath = title.replaceAll(" ", "");
 		console.log("Title: " + title);
 
-		if(this.app.vault.getAbstractFileByPath(folderPath) != null && this.app.vault.getAbstractFileByPath(folderPath) instanceof TFolder){
+		if(app.vault.getAbstractFileByPath(folderPath) !== null && app.vault.getAbstractFileByPath(folderPath) instanceof TFolder){
 			duplicatePackingListCounter++;
-			while(this.app.vault.getAbstractFileByPath(folderPath+"("+duplicatePackingListCounter+")") != null && this.app.vault.getAbstractFileByPath(folderPath+"("+duplicatePackingListCounter+")") instanceof TFolder){
+			while(app.vault.getAbstractFileByPath(folderPath+"("+duplicatePackingListCounter+")") !== null && app.vault.getAbstractFileByPath(folderPath+"("+duplicatePackingListCounter+")") instanceof TFolder){
 				duplicatePackingListCounter++;
 			}
 			folderPath = folderPath+"("+duplicatePackingListCounter+")";
 		}
-		if(this.app.vault.getAbstractFileByPath(folderPath) != null && this.app.vault.getAbstractFileByPath(folderPath) instanceof TFolder){console.log("AAA");}
 		
-		container = doc.querySelector('div#lpListDescription');
+		container = doc.querySelector("div#lpListDescription");
 		if(!container){
 			description = "";
 		} else{
-			container = container.querySelector('p');
-			description = container ? (container.textContent || '') : '';
+			container = container.querySelector("p");
+			description = container ? (container.textContent || "") : "";
 		}
 		
 		console.log("Description: " + description);
 
-		container = doc.querySelector('span.lpSubtotalUnit');
+		container = doc.querySelector("span.lpSubtotalUnit");
 		if(!container){
 			new Notice("Unable to find the packing list total weight unit.");
 			return;
 		}
-		totalsUnit = container ? (container.textContent || '') : '';
+		totalsUnit = container ? (container.textContent || "") : "";
 		console.log("Totals Unit: " + totalsUnit);
 
-		container = doc.querySelector('span.lpPriceCell.lpNumber');
+		container = doc.querySelector("span.lpPriceCell.lpNumber");
 		if(!container){
 			console.log("span.lpPriceCell not found");
 			currency = "";
 		} else {
-			currency = container ? (container.textContent.trim().slice(0, 1) || '') : '';
+			currency = container ? (container.textContent.trim().slice(0, 1) || "") : "";
 		}
 		console.log("Currency: " + currency);
 
-		await this.app.vault.createFolder(folderPath);
-		await this.app.vault.createFolder(folderPath+'/gear');
+		await app.vault.createFolder(folderPath);
+		await app.vault.createFolder(folderPath+"/gear");
 
-		let nodeList = doc.querySelectorAll('li.lpCategory');
+		const nodeList = doc.querySelectorAll("li.lpCategory");
 		for(let i=0; i<nodeList.length; i++){
 			categoryName = "";
-			container = nodeList[i].querySelector('h2');
+			container = nodeList[i].querySelector("h2");
 			if(!container){
 				if(i===0){
 					new Notice("Unable to find the first category name.");
@@ -329,7 +327,7 @@ async function importList(html: string): Promise<void>{
 				console.log("h2 not found");
 				return;
 			}
-			categoryName = (container ? (container.textContent || '') : '').trim();
+			categoryName = (container ? (container.textContent || "") : "").trim();
 			if(categoryName === ""){
 				categoryName = "UnnamedCategory";
 			}
@@ -344,9 +342,9 @@ async function importList(html: string): Promise<void>{
 				categories.push(categoryName);
 			}
 			
-			await this.app.vault.createFolder(folderPath+'/gear/'+categories[i]);
+			await app.vault.createFolder(folderPath+"/gear/"+categories[i]);
 
-			let nodeList2 = nodeList[i].querySelectorAll('li.lpItem');
+			const nodeList2 = nodeList[i].querySelectorAll("li.lpItem");
 			for(let j=0; j<nodeList2.length; j++){
 				let itemImage = "";
 				let itemName = "";
@@ -362,16 +360,16 @@ async function importList(html: string): Promise<void>{
 				let itemQty = 0;
 				
 
-				container = nodeList2[j].querySelector('span.lpImageCell');
+				container = nodeList2[j].querySelector("span.lpImageCell");
 				if(!container){
 					console.log("span.lpImageCell not found");
 					itemImage = "";
 				} else {
-					container = container.querySelector('img');
-					itemImage = container ? (container.getAttribute('src') || '') : '';
+					container = container.querySelector("img");
+					itemImage = container ? (container.getAttribute("src") || "") : "";
 				}
 				
-				container = nodeList2[j].querySelector('span.lpName');
+				container = nodeList2[j].querySelector("span.lpName");
 				if(!container){
 					if(j===0){
 						new Notice("Unable to find the first item name.");
@@ -385,7 +383,7 @@ async function importList(html: string): Promise<void>{
 					console.log("span.lpName not found");
 					return;
 				}
-				itemName = container ? (container.textContent.trim() || '') : '';
+				itemName = container ? (container.textContent.trim() || "") : "";
 				itemName = itemName.replaceAll(":", "=");
 				if(itemName === ""){
 					itemName = "UnnamedItem";
@@ -401,41 +399,41 @@ async function importList(html: string): Promise<void>{
 					items.push(itemName);
 				}
 
-				let containerCopy = nodeList2[j].querySelector('a.lpHref');
+				let containerCopy = nodeList2[j].querySelector("a.lpHref");
 				if(!containerCopy){
 					console.log("a.lpHref not found");
 					itemLink = "";
 				} else {
-					itemLink = containerCopy ? (containerCopy.getAttribute('href') || '') : '';
+					itemLink = containerCopy ? (containerCopy.getAttribute("href") || "") : "";
 				}
 
-				container = nodeList2[j].querySelector('span.lpDescription');
+				container = nodeList2[j].querySelector("span.lpDescription");
 				if(!container){
 					console.log("span.lpDescription not found");
 					return;
 				}
-				itemDescription = container ? (container.textContent.trim() || '') : '';
+				itemDescription = container ? (container.textContent.trim() || "") : "";
 				itemDescription = itemDescription.replaceAll(":", "=");
 				if(itemDescription === ""){
 					itemDescription = "";
 				}
 
-				container = nodeList2[j].querySelector('i.lpWorn.lpActive');
+				container = nodeList2[j].querySelector("i.lpWorn.lpActive");
 				if(!container){
 					itemWorn = false;
 				} else {
 					itemWorn = true;
 				}
 				
-				container = nodeList2[j].querySelector('i.lpConsumable.lpActive');
+				container = nodeList2[j].querySelector("i.lpConsumable.lpActive");
 				if(!container){
 					itemConsumable = false;
 				} else {
 					itemConsumable = true;
 				}
 
-				container = nodeList2[j].querySelector('span.lpActionsCell');
-				containerCopy = nodeList2[j].querySelector('span.lpActionsCell');
+				container = nodeList2[j].querySelector("span.lpActionsCell");
+				containerCopy = nodeList2[j].querySelector("span.lpActionsCell");
 				if(!container || !containerCopy){
 					if(j===0){
 						new Notice("Unable to find the first item actions cell.");
@@ -449,13 +447,13 @@ async function importList(html: string): Promise<void>{
 					console.log("span.lpActionsCell not found");
 					return;
 				} else{
-					container = containerCopy.querySelector('i.lpStar.lpHidden');
+					container = containerCopy.querySelector("i.lpStar.lpHidden");
 					if(!container){
-						container = containerCopy.querySelector('i.lpStar1');
+						container = containerCopy.querySelector("i.lpStar1");
 						if(!container){
-							container = containerCopy.querySelector('i.lpStar2');
+							container = containerCopy.querySelector("i.lpStar2");
 							if(!container){
-								container = containerCopy.querySelector('i.lpStar3');
+								container = containerCopy.querySelector("i.lpStar3");
 								if(!container){
 									itemStar1 = false;
 									itemStar2 = false;
@@ -482,15 +480,15 @@ async function importList(html: string): Promise<void>{
 					}
 				}
 				
-				container = nodeList2[j].querySelector('span.lpPriceCell');
+				container = nodeList2[j].querySelector("span.lpPriceCell");
 				if(!container){
 					console.log("span.lpPriceCell not found");
 					itemPrice = "0";
 				} else{
-					itemPrice = container ? (container.textContent.trim().slice(1) || '0') : '0';
+					itemPrice = container ? (container.textContent.trim().slice(1) || "0") : "0";
 				}
 
-				container = nodeList2[j].querySelector('span.lpWeight');
+				container = nodeList2[j].querySelector("span.lpWeight");
 				if(!container){
 					if(j===0){
 						new Notice("Unable to find the first item weight.");
@@ -504,9 +502,9 @@ async function importList(html: string): Promise<void>{
 					console.log("span.lpWeight not found");
 					return;
 				}
-				itemWeight = container ? (container.textContent || '0') : '0';
+				itemWeight = container ? (container.textContent || "0") : "0";
 
-				container = nodeList2[j].querySelector('span.lpDisplay');
+				container = nodeList2[j].querySelector("span.lpDisplay");
 				if(!container){
 					if(j===0){
 						new Notice("Unable to find the first item's weight unit.");
@@ -520,10 +518,10 @@ async function importList(html: string): Promise<void>{
 					console.log("span.lpWeight not found");
 					return;
 				}
-				itemUnit = container ? (container.textContent || '0') : '0';
+				itemUnit = container ? (container.textContent || "0") : "0";
 
 
-				container = nodeList2[j].querySelector('span.lpQtyCell');
+				container = nodeList2[j].querySelector("span.lpQtyCell");
 				if(!container){
 					if(j===0){
 						new Notice("Unable to find the first item quantity.");
@@ -537,7 +535,7 @@ async function importList(html: string): Promise<void>{
 					console.log("span.lpQtyCell not found");
 					return;
 				}
-				itemQty = container ? parseInt(container.textContent || '0') : 0;
+				itemQty = container ? parseInt(container.textContent || "0") : 0;
 
 				const itemNotePropertiesReplaced = itemNoteProperties
 					.replace("{{itemName}}", itemName)
@@ -557,7 +555,7 @@ async function importList(html: string): Promise<void>{
 					.replace("{{itemQty}}", itemQty.toString());
 
 				console.log("added item:" +"\nname:" + itemName + "\ndescription:" + itemDescription + "\nimage:" + itemImage + "\ncategory:" + categories[i] + "\nworn:" + itemWorn + "\nconsumable:" + itemConsumable + "\nstar1:" + itemStar1 + "\nstar2:" + itemStar2 + "\nstar3:" + itemStar3 + "\ncurrency:" + currency + "\nprice:" + itemPrice.toString() + "\nweight:" + itemWeight.toString() + "\nunit:" + itemUnit + "\nqty:" + itemQty.toString());		
-				await this.app.vault.create(folderPath+'/gear/'+categories[i]+'/'+itemName+'.md', itemNotePropertiesReplaced);
+				await app.vault.create(folderPath+"/gear/"+categories[i]+"/"+itemName+".md", itemNotePropertiesReplaced);
 			}
 		}
 
@@ -567,17 +565,17 @@ async function importList(html: string): Promise<void>{
 			.replace("{{currency}}", currency)
 			.replace("{{totalsUnit}}", totalsUnit)
 			.replace("{{categories}}", JSON.stringify(categories));
-		await this.app.vault.create(folderPath+'/'+title+'.md', listNoteProperties+listNoteChartsAndDataviewjsReplaced+description);
+		await app.vault.create(folderPath+"/"+title+".md", listNoteProperties+listNoteChartsAndDataviewjsReplaced+description);
 		
-		const filePath = folderPath+'/'+title+'.md';
-		const file = this.app.vault.getAbstractFileByPath(filePath);
+		const filePath = folderPath+"/"+title+".md";
+		const file = app.vault.getAbstractFileByPath(filePath);
 		if (file && file instanceof TFile) {
 			for(let i=0; i<categories.length; i++){	
 				const textToAppend = listNoteBases
 					.replaceAll("{{folderPath}}", folderPath)
 					.replaceAll("{{categories[i]}}", categories[i]);
-				const currentContent = await this.app.vault.read(file);
-				await this.app.vault.modify(file, currentContent + textToAppend);
+				const currentContent = await app.vault.read(file);
+				await app.vault.modify(file, currentContent + textToAppend);
 			}
 		} else {
 		console.log("Nota non trovata: " + filePath);
@@ -586,7 +584,7 @@ async function importList(html: string): Promise<void>{
 		
 	} catch (err) {
 		new Notice("Error parsing the packing list HTML.\nMore details in the console.");
-		console.error('Error parsing HTML', err);
+		console.error("Error parsing HTML", err);
 		return;
 	}
 
