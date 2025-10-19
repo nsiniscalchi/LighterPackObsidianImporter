@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
 import obsidianmd from "eslint-plugin-obsidianmd";
+import { plugin as exceptionhandling } from "eslint-plugin-exception-handling";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,7 +27,8 @@ export default defineConfig(globalIgnores(["**/node_modules/", "**/main.js"]),{
 
     plugins: {
         "@typescript-eslint": typescriptEslint,
-        "obsidianmd": obsidianmd
+        "obsidianmd": obsidianmd,
+        "exceptionhandling": exceptionhandling,
     },
 
     languageOptions: {
@@ -57,11 +59,16 @@ export default defineConfig(globalIgnores(["**/node_modules/", "**/main.js"]),{
         "curly": ["error", "all"],
         "no-eval": "error",
         "eqeqeq": ["error", "always"],
+        "no-throw-literal": "error",
+        "no-useless-catch": "error",
         "@typescript-eslint/no-base-to-string": "error",
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/restrict-plus-operands": ["error", { skipCompoundAssignments: false }],
         "@typescript-eslint/restrict-template-expressions": "error",
         "@typescript-eslint/no-unsafe-assignment": "error",
-        ...obsidianmd.configs.recommended.rules
+        ...obsidianmd.configs.recommended.rules,
+        "exceptionhandling/might-throw": "error",
+        "exceptionhandling/no-unhandled": "error",
+        "exceptionhandling/use-error-cause": "error"
     },
 });

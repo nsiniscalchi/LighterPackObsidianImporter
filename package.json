@@ -20,6 +20,7 @@
 		"builtin-modules": "3.3.0",
 		"esbuild": "^0.25.10",
 		"eslint": "^9.38.0",
+		"eslint-plugin-exception-handling": "^1.5.5",
 		"eslint-plugin-obsidianmd": "^0.1.5",
 		"globals": "^16.4.0",
 		"obsidian": "latest",
