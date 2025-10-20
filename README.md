@@ -1,6 +1,6 @@
 # LighterPack importer for Obsidian
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/nsiniscalchi/LighterPackObsidianImporter?style=flat-square)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/nsiniscalchi/LighterPackObsidianImporter?style=flat-square)](https://github.com/nsiniscalchi/LighterPackObsidianImporter/releases)
 
 Import and manage packing lists from [lighterpack.com](https://lighterpack.com) directly in your Obsidian vault.
 
