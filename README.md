@@ -48,7 +48,7 @@ The plugin will generate a new folder with your summary note and the related ind
 >
 > **Optional (for full functionality):**  
 > - [Dataview](https://github.com/blacksmithgu/obsidian-dataview) — used to dinamically display totals summary table
-> - [Charts](https://obsidian.md/plugins?id=obsidian-charts) — required to render the pie chart in the summary note  
+> - [Charts](https://github.com/phibr0/obsidian-charts) — required to render the pie chart in the summary note  
 
 ### Manual Installation
 
