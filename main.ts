@@ -214,7 +214,7 @@ async function importList(app: App, html: string): Promise<void>{
 		if(!container){
 			currency = "";
 		} else {
-			currency = container ? (container.textContent.trim().slice(0, 1) || "") : "";
+			currency = container ? ((container.textContent || "").trim().slice(0, 1) || "") : "";
 		}
 
 		await app.vault.createFolder(normalizePath(folderPath));
@@ -289,7 +289,7 @@ async function importList(app: App, html: string): Promise<void>{
 					}
 					return;
 				}
-				itemName = container ? (container.textContent.trim() || "") : "";
+				itemName = container ? ((container.textContent || "").trim() || "") : "";
 				itemName = itemName.replaceAll(":", "=");
 				if(itemName === ""){
 					itemName = "UnnamedItem";
@@ -325,7 +325,7 @@ async function importList(app: App, html: string): Promise<void>{
 					}
 					return;
 				}
-				itemDescription = container ? (container.textContent.trim() || "") : "";
+				itemDescription = container ? ((container.textContent || "").trim() || "") : "";
 				itemDescription = itemDescription.replaceAll(":", "=");
 				if(itemDescription === ""){
 					itemDescription = "";
@@ -396,7 +396,7 @@ async function importList(app: App, html: string): Promise<void>{
 				if(!container){
 					itemPrice = "0";
 				} else{
-					itemPrice = container ? (container.textContent.trim().slice(1) || "0") : "0";
+					itemPrice = container ? ((container.textContent || "").trim().slice(1) || "0") : "0";
 				}
 
 				container = nodeList2[j].querySelector("span.lpWeight");
