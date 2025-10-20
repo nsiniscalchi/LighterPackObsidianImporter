@@ -1,12 +1,10 @@
 {
-	"id": "LighterPackImporter",
+	"id": "lighterpack-importer",
 	"name": "LighterPack importer",
 	"version": "1.0.0",
 	"minAppVersion": "1.9.10",
-	"description": "Import a packing list from https://lighterpack.com to Obsidian.",
+	"description": "Import a packing list from https://lighterpack.com.",
 	"author": "Nicola Siniscalchi",
 	"authorUrl": "https://nicolasiniscalchi.com",
-	"enabledByDefault": true,
 	"isDesktopOnly": false
-
 }
