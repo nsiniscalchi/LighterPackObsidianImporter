@@ -40,7 +40,7 @@ export default class LighterPackObsidianImporter extends Plugin {
 						void importList(this.app, html);
 					} catch (e) {
 						new Notice("Unable to import the packing list.\nMore details in the console.");
-						console.error(e);
+						console.error("Unable to import the packing list:\n", e);
 					}
 				}).open();
 			}
@@ -84,7 +84,7 @@ export default class LighterPackObsidianImporter extends Plugin {
 						void importList(this.app, html);
 					} catch (e) {
 						new Notice("Unable to import the packing list.\nMore details in the console.");
-						console.error(e);
+						console.error("Unable to import the packing list:\n", e);
 					}
 				}).open();
 			});
@@ -199,7 +199,12 @@ async function importList(app: App, html: string): Promise<void>{
 			description = "\n\n";
 		} else{
 			const turndownService = new TurndownService();
-			const markdownContent = turndownService.turndown(container.innerHTML.trim());
+			const serializer = new XMLSerializer();
+			const innerHtml = Array.from(container.childNodes)
+				.map(node => serializer.serializeToString(node))
+				.join("")
+				.trim();
+			const markdownContent = turndownService.turndown(innerHtml);
 			description = markdownContent+"\n\n";
 		}
 		
@@ -485,7 +490,7 @@ async function importList(app: App, html: string): Promise<void>{
 		}
 	} catch (err) {
 		new Notice("Error parsing the packing list HTML.\nMore details in the console.");
-		console.error("Error parsing HTML", err);
+		console.error("Error parsing HTML:\n", err);
 		return;
 	}
 

@@ -61,13 +61,17 @@ const parseWeight = (weight) => weight ? parseFloat(weight.toString().split(" ")
 const parseItemUnit = (weight) => weight ? (weight.toString().split(" ")[1]) : " ";
 const parsePrice = (price) => price ? parseFloat(price.toString().split(" ")[1]) : 0;
 
+function clearContainer(el){
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
 const pages = dv.pages('"{{folderPath}}/gear"').where(page => page.Weight !== undefined && page.Price !== undefined);
 
 if(pages.length === 0){
-  dv.container.innerHTML = "";
-  const container = dv.container.createEl('div', { cls: 'lp-container' });\n`+
-  "container.createEl('p', { cls: 'lp-text-col' }).innerHTML = `<p>No items found in the packing list.</p>`;\n"+
-`} else{
+  clearContainer(dv.container);
+  const container = dv.container.createEl('div', { cls: 'lp-container' });
+  const p = container.createEl('p', { cls: 'lp-text-col' }).setText("No items found in the packing list.");
+} else{
   let categoriesData = {};
   let totalWeight = 0, totalPrice = 0, consumableWeight = 0, wornWeight = 0;
   let currencySymbol = '{{currency}}', weightUnit = '{{totalsUnit}}';
@@ -154,7 +158,7 @@ if(pages.length === 0){
       }
   };
 
-  dv.container.innerHTML = "";
+  clearContainer(dv.container);
 
   const container = dv.container.createEl('div', { cls: 'lp-container' });
   const chartCol = container.createEl('div', { cls: 'lp-chart-col' });
@@ -167,12 +171,42 @@ if(pages.length === 0){
   }
 
   const table = tableCol.createEl('table', { cls: 'lp-table' });
-  table.createEl('thead').createEl('tr').innerHTML = "<th>Category</th><th>Price</th><th>Weight</th>";
+  const thead = table.createEl('thead');
+  const headerRow = thead.createEl('tr');
+  headerRow.createEl('th').setText('Category');
+  headerRow.createEl('th').setText('Price');
+  headerRow.createEl('th').setText('Weight');
+
   const tbody = table.createEl('tbody');
-  sortedCategories.forEach((cat, index) => {`+
-    "tbody.createEl('tr').innerHTML = `<td><span class='lp-color-box' style='background-color: ${chartColors[index % chartColors.length]}'></span>${cat}</td><td>${currencySymbol} ${categoriesData[cat].price.toFixed(2)}</td><td>${categoriesData[cat].weight.toFixed(2)} ${weightUnit}</td>`;});\n"+
-    "tbody.createEl('tr', { cls: 'lp-total-row' }).innerHTML = `<td><strong>Total</strong></td><td><strong>${currencySymbol} ${totalPrice.toFixed(2)}</strong></td><td><strong>${totalWeight.toFixed(2)} ${weightUnit}</strong></td>`;\n"+
-    "tbody.createEl('tr', { cls: 'lp-summary-row' }).innerHTML = `<td><strong>Consumable</strong></td><td></td><td>${consumableWeight.toFixed(2)} ${weightUnit}</td>`;\n"+
-    "tbody.createEl('tr', { cls: 'lp-summary-row' }).innerHTML = `<td><strong>Worn</strong></td><td></td><td>${wornWeight.toFixed(2)} ${weightUnit}</td>`;\n"+
-    "tbody.createEl('tr', { cls: 'lp-summary-row' }).innerHTML = `<td><strong>Base Weight</strong></td><td></td><td>${baseWeight.toFixed(2)} ${weightUnit}</td>`;\n"+
+
+  sortedCategories.forEach((cat, index) => {
+    const catData = categoriesData[cat];
+    const tr = tbody.createEl('tr');
+    const tdCat = tr.createEl('td');\n`+
+    "const colorBox = tdCat.createEl('span', { cls: 'lp-color-box', attr: { style: `background-color: ${chartColors[index % chartColors.length]};`}});\n"+
+    "tdCat.createEl('span').setText(cat);\n"+
+    "tr.createEl('td').setText(`${currencySymbol} ${catData.price.toFixed(2)}`);\n"+
+    "tr.createEl('td').setText(`${catData.weight.toFixed(2)} ${weightUnit}`);\n"+
+  `});
+
+  const totalRow = tbody.createEl('tr', { cls: 'lp-total-row' });
+  const totalCell1 = totalRow.createEl('td');
+  totalCell1.createEl('strong').setText('Total');\n`+
+  "totalRow.createEl('td').createEl('strong').setText(`${currencySymbol} ${totalPrice.toFixed(2)}`);\n"+
+  "totalRow.createEl('td').createEl('strong').setText(`${totalWeight.toFixed(2)} ${weightUnit}`);\n"+`
+
+  const consumRow = tbody.createEl('tr', { cls: 'lp-summary-row' });
+  consumRow.createEl('td').createEl('strong').setText('Consumable');
+  consumRow.createEl('td');\n`+
+  "consumRow.createEl('td').setText(`${consumableWeight.toFixed(2)} ${weightUnit}`);\n"+`
+
+  const wornRow = tbody.createEl('tr', { cls: 'lp-summary-row' });
+  wornRow.createEl('td').createEl('strong').setText('Worn');
+  wornRow.createEl('td');\n`+
+  "wornRow.createEl('td').setText(`${wornWeight.toFixed(2)} ${weightUnit}`);\n"+`
+
+  const baseRow = tbody.createEl('tr', { cls: 'lp-summary-row' });
+  baseRow.createEl('td').createEl('strong').setText('Base Weight');
+  baseRow.createEl('td');\n`+
+  "baseRow.createEl('td').setText(`${baseWeight.toFixed(2)} ${weightUnit}`);\n"+
 "}\n```\n";
