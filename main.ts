@@ -6,7 +6,7 @@ export default class LighterPackObsidianImporter extends Plugin {
 	
 	ribbonIconEl: HTMLElement | null = null;
 
-	async onload() {
+	onload() {
 
 		this.addCommand({
 			id: "import-packing-list-from-url",
@@ -430,7 +430,6 @@ async function importList(app: App, html: string): Promise<void>{
 				const textToAppend = listNoteBases
 					.replaceAll("{{folderPath}}", normalizePath(folderPath))
 					.replaceAll("{{categories[i]}}", categories[i]);
-				const currentContent = await app.vault.read(file);
 				await app.vault.append(file, textToAppend);
 			}
 		}
