@@ -1,25 +1,12 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, normalizePath, requestUrl } from "obsidian";
+import { App, Modal, Notice, Plugin, Setting, TFile, normalizePath, requestUrl } from "obsidian";
 import {regexURL, listNoteProperties, itemNoteProperties, listNoteBases, listNoteChartsAndDataviewjs} from "formattedStrings";
 import TurndownService from "turndown";
 
-interface LighterPackObsidianImporterSettings {
-	showRibbonIcon: boolean;
-}
-
-const DEFAULT_SETTINGS: LighterPackObsidianImporterSettings = {
-	showRibbonIcon: true
-};
-
 export default class LighterPackObsidianImporter extends Plugin {
 	
-	settings: LighterPackObsidianImporterSettings;
 	ribbonIconEl: HTMLElement | null = null;
 
 	async onload() {
-
-		await this.loadSettings();
-
-		this.addSettingTab(new SettingTab(this.app, this));
 
 		this.addCommand({
 			id: "import-packing-list-from-url",
@@ -53,42 +40,29 @@ export default class LighterPackObsidianImporter extends Plugin {
 
 	}
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as LighterPackObsidianImporterSettings;
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-
 	updateRibbonIcon() {
-		if (this.ribbonIconEl) {
-			this.ribbonIconEl.remove();
-			this.ribbonIconEl = null;
-		}
-
-		if (this.settings.showRibbonIcon) {
-			this.ribbonIconEl = this.addRibbonIcon("backpack", "Import a lighterpack.com list", () => {
-				new UrlPromptModal(this.app, async (url: string) => {
-					if (!url) {return;}
-					if(!url.startsWith("https://")){
-						url = "https://"+url;
-					}
-					if(regexURL.test(url) === false){
-						new Notice("Invalid URL.\nPlease enter a valid lighterpack.com URL.");
-						return;
-					}
-					try {
-						const response = await requestUrl({ url });
-						const html = response.text;
-						void importList(this.app, html);
-					} catch (e) {
-						new Notice("Unable to import the packing list.\nMore details in the console.");
-						console.error("Unable to import the packing list:\n", e);
-					}
-				}).open();
-			});
-		}
+		
+		this.ribbonIconEl = this.addRibbonIcon("backpack", "Import a lighterpack.com list", () => {
+			new UrlPromptModal(this.app, async (url: string) => {
+				if (!url) {return;}
+				if(!url.startsWith("https://")){
+					url = "https://"+url;
+				}
+				if(regexURL.test(url) === false){
+					new Notice("Invalid URL.\nPlease enter a valid lighterpack.com URL.");
+					return;
+				}
+				try {
+					const response = await requestUrl({ url });
+					const html = response.text;
+					void importList(this.app, html);
+				} catch (e) {
+					new Notice("Unable to import the packing list.\nMore details in the console.");
+					console.error("Unable to import the packing list:\n", e);
+				}
+			}).open();
+		});
+	
 	}
 }
 
@@ -131,34 +105,6 @@ class UrlPromptModal extends Modal {
 	}
 }
 
-class SettingTab extends PluginSettingTab {
-	plugin: LighterPackObsidianImporter;
-
-	constructor(app: App, plugin: LighterPackObsidianImporter) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName("Show ribbon icon")
-			.setDesc("Show the ribbon icon in the left sidebar")
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.showRibbonIcon)
-				.onChange(async (value) => {
-					this.plugin.settings.showRibbonIcon = value;
-					await this.plugin.saveSettings();
-					this.display();
-					this.plugin.updateRibbonIcon();
-				})
-			);
-	}
-}
-
 async function importList(app: App, html: string): Promise<void>{
 
 	let title = "";
@@ -185,7 +131,7 @@ async function importList(app: App, html: string): Promise<void>{
 			title = "UnnamedPackingList";
 		}
 
-		let folderPath = title.replaceAll(" ", "");
+		let folderPath = normalizePath(title).replaceAll(" ", "");
 		if(app.vault.getFolderByPath(folderPath) !== null){
 			duplicatePackingListCounter++;
 			while(app.vault.getFolderByPath(folderPath+"("+duplicatePackingListCounter+")") !== null){
@@ -485,7 +431,7 @@ async function importList(app: App, html: string): Promise<void>{
 					.replaceAll("{{folderPath}}", normalizePath(folderPath))
 					.replaceAll("{{categories[i]}}", categories[i]);
 				const currentContent = await app.vault.read(file);
-				await app.vault.modify(file, currentContent + textToAppend);
+				await app.vault.append(file, textToAppend);
 			}
 		}
 	} catch (err) {
